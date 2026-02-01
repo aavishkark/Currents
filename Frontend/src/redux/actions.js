@@ -1,4 +1,5 @@
 import axios from "axios"
+import { calculateAQI } from '../utils/weatherUtils'
 import {
     POST_LOGIN_FAILURE, POST_LOGIN_REQ, POST_LOGIN_SUCCESS, POST_LOGOUT_REQ,
     POST_REGISTER_FAILURE, POST_REGISTER_REQ, POST_REGISTER_SUCCESS, SAVE_USER_DATA,
@@ -101,8 +102,19 @@ export const getWeather = (city) => (dispatch) => {
 
     return axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
         .then((res) => {
-            setCachedData(cacheKey, res.data)
-            dispatch({ type: GET_WEATHER_SUCCESS, payload: res.data })
+            const { lat, lon } = res.data.coord
+            axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
+                .then(aqiRes => {
+                    const pm25 = aqiRes.data.list[0]?.components?.pm2_5
+                    const aqi = calculateAQI(pm25)
+                    const combinedData = { ...res.data, aqi }
+                    setCachedData(cacheKey, combinedData)
+                    dispatch({ type: GET_WEATHER_SUCCESS, payload: combinedData })
+                })
+                .catch(() => {
+                    setCachedData(cacheKey, res.data)
+                    dispatch({ type: GET_WEATHER_SUCCESS, payload: res.data })
+                })
         })
         .catch((err) => {
             dispatch({ type: GET_WEATHER_FAILURE, payload: { msg: err } })
@@ -121,8 +133,18 @@ export const getWeatherByCoords = (lat, lon) => (dispatch) => {
 
     return axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`)
         .then((res) => {
-            setCachedData(cacheKey, res.data)
-            dispatch({ type: GET_WEATHER_SUCCESS, payload: res.data })
+            axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
+                .then(aqiRes => {
+                    const pm25 = aqiRes.data.list[0]?.components?.pm2_5
+                    const aqi = calculateAQI(pm25)
+                    const combinedData = { ...res.data, aqi }
+                    setCachedData(cacheKey, combinedData)
+                    dispatch({ type: GET_WEATHER_SUCCESS, payload: combinedData })
+                })
+                .catch(() => {
+                    setCachedData(cacheKey, res.data)
+                    dispatch({ type: GET_WEATHER_SUCCESS, payload: res.data })
+                })
         })
         .catch((err) => {
             dispatch({ type: GET_WEATHER_FAILURE, payload: { msg: err } })

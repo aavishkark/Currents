@@ -14,6 +14,7 @@ import ListItemText from '@mui/material/ListItemText'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { postLogout } from '../../redux/actions'
+import './navbar.css'
 
 const Navbar = () => {
     const [drawerOpen, setDrawerOpen] = React.useState(false)
@@ -36,6 +37,7 @@ const Navbar = () => {
 
     const menuItems = [
         { text: 'Home', path: '/', show: true },
+        { text: 'Maps', path: '/maps', show: true },
         { text: 'Favorites', path: '/favorites', show: true },
         { text: 'Settings', path: '/settings', show: auth },
         { text: 'Login', path: '/login', show: !auth },
@@ -83,25 +85,18 @@ const Navbar = () => {
                         variant="h6"
                         component={RouterLink}
                         to="/"
+                        className="brand-logo"
                         sx={{
                             textDecoration: 'none',
                             fontWeight: 800,
                             letterSpacing: -0.5,
                             fontSize: '1.8rem',
                             fontFamily: '"Outfit", "Roboto", sans-serif',
-                            background: 'linear-gradient(135deg, #004aad 0%, #0060d4 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 1,
+                            gap: 1.5,
                             transition: 'opacity 0.2s',
-                            '&:hover': { opacity: 0.8 },
-                            '[data-theme="dark"] &': {
-                                background: 'linear-gradient(135deg, #4fd1c5 0%, #63b3ed 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                            }
+                            '&:hover': { opacity: 0.8 }
                         }}
                     >
                         Currents
@@ -171,7 +166,7 @@ const Navbar = () => {
                         color: 'text.primary',
                         width: 250,
                         '[data-theme="dark"] &': {
-                            backgroundColor: 'transparent',
+                            backgroundColor: '#1A2027',
                             backdropFilter: 'none',
                             color: 'white'
                         }

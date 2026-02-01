@@ -10,12 +10,14 @@ import IconButton from '@mui/material/IconButton'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import MapIcon from '@mui/icons-material/Map'
+import Tooltip from '@mui/material/Tooltip'
 import axios from 'axios'
-import WeatherDetails from '../../Components/WeatherDetails/WeatherDetails'
-import Forecast from '../../Components/Forecast/Forecast'
+import WeatherDetails from '../../components/WeatherDetails/WeatherDetails'
+import Forecast from '../../components/Forecast/Forecast'
 import WeatherChart from '../../Components/WeatherChart/WeatherChart'
 import { formatTemp, isDaytime, getMoonPhase } from '../../utils/weatherUtils'
-import WeatherLoader from '../../Components/Loading/WeatherLoader'
+import WeatherLoader from '../../components/Loading/WeatherLoader'
 
 const City = () => {
     const { name } = useParams()
@@ -78,9 +80,25 @@ const City = () => {
                     <IconButton onClick={() => navigate(-1)} sx={{ ml: -1 }}>
                         <ArrowBackIcon />
                     </IconButton>
-                    <IconButton onClick={handleFavoriteToggle} sx={{ color: isFavorite ? 'error.main' : 'inherit' }}>
-                        {isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title="View on Map">
+                            <IconButton
+                                onClick={() => navigate(`/maps?lat=${currentWeather.coord?.lat}&lon=${currentWeather.coord?.lon}&city=${currentWeather.name}`)}
+                                sx={{
+                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                                    color: 'white',
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                                    }
+                                }}
+                            >
+                                <MapIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <IconButton onClick={handleFavoriteToggle} sx={{ color: isFavorite ? 'error.main' : 'inherit' }}>
+                            {isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                        </IconButton>
+                    </Box>
                 </Box>
 
                 <Box sx={{ textAlign: 'center', mb: 4 }}>

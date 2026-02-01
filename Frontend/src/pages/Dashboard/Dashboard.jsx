@@ -5,63 +5,52 @@ import { formatTemp } from '../../utils/weatherUtils'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import InputAdornment from '@mui/material/InputAdornment'
-import SearchIcon from '@mui/icons-material/Search'
+
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import WaterDropIcon from '@mui/icons-material/WaterDrop'
 import AirIcon from '@mui/icons-material/Air'
+import MapIcon from '@mui/icons-material/Map'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
 import ThermostatIcon from '@mui/icons-material/Thermostat'
-import Divider from '@mui/material/Divider'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
-import axios from 'axios'
+import Divider from '@mui/material/Divider'
 import { getWeather, getWeatherByCoords } from '../../redux/actions'
+import WeatherLoader from '../../components/Loading/WeatherLoader'
+import SearchBar from '../../Components/SearchBar/SearchBar'
 
 const Dashboard = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const { celsius } = useSelector((store) => store.preferencesReducer)
-    const { currentWeather } = useSelector((store) => store.weatherReducer)
-    const [query, setQuery] = useState('')
-    const [results, setResults] = useState([])
-    const [isFocused, setIsFocused] = useState(false)
-    const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
+    const { currentWeather, isLoading } = useSelector((store) => store.weatherReducer)
+    const [locationError, setLocationError] = useState(false)
+    const [isLocating, setIsLocating] = useState(true)
 
     useEffect(() => {
+        setIsLocating(true)
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords
                     dispatch(getWeatherByCoords(latitude, longitude))
+                    setLocationError(false)
+                    setIsLocating(false)
                 },
                 (error) => {
-                    dispatch(getWeather('London'))
+                    setLocationError(true)
+                    setIsLocating(false)
                 }
             )
         } else {
-            dispatch(getWeather('London'))
+            setLocationError(true)
+            setIsLocating(false)
         }
     }, [dispatch])
 
-    useEffect(() => {
-        if (query.length > 2) {
-            const timer = setTimeout(() => {
-                axios.get(`https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${API_KEY}`)
-                    .then(res => setResults(res.data))
-                    .catch(() => setResults([]))
-            }, 300)
-            return () => clearTimeout(timer)
-        } else {
-            setResults([])
-        }
-    }, [query, API_KEY])
 
-    const handleCityClick = (city) => {
-        navigate(`/city/${city.name}`)
-    }
+
+
 
     const getGreeting = () => {
         const hour = new Date().getHours()
@@ -95,86 +84,13 @@ const Dashboard = () => {
                 </Typography>
             </Box>
 
-            <Box sx={{ position: 'relative', maxWidth: 600, mx: 'auto', width: '100%', zIndex: 10 }}>
-                <Paper
-                    elevation={isFocused ? 8 : 2}
-                    sx={{
-                        p: '2px 4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderRadius: 4,
-                        transition: 'all 0.3s ease',
-                        border: '1px solid',
-                        borderColor: isFocused ? 'primary.main' : 'divider',
+            <SearchBar />
 
-                    }}
-                >
-                    <Box sx={{ p: 2 }}>
-                        <SearchIcon color={isFocused ? "primary" : "action"} />
-                    </Box>
-                    <TextField
-                        fullWidth
-                        placeholder="Search a place"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => {
-                            setTimeout(() => setIsFocused(false), 200)
-                        }}
-                        variant="standard"
-                        InputProps={{
-                            disableUnderline: true,
-                            sx: { fontSize: '1.1rem', fontWeight: 500 }
-                        }}
-                    />
-                </Paper>
-
-                {results.length > 0 && (
-                    <Paper
-                        elevation={6}
-                        sx={{
-                            position: 'absolute',
-                            top: '120%',
-                            left: 0,
-                            right: 0,
-                            borderRadius: 3,
-                            overflow: 'hidden',
-                            animation: 'slideDown 0.2s ease-out'
-                        }}
-                    >
-                        <List>
-                            {results.map((city, index) => (
-                                <ListItem
-                                    key={`${city.name}-${city.country}-${index}`}
-                                    onClick={() => handleCityClick(city)}
-                                    sx={{
-                                        cursor: 'pointer',
-                                        transition: 'background 0.2s',
-                                        '&:hover': { bgcolor: 'action.hover' },
-                                        py: 2
-                                    }}
-                                >
-                                    <LocationOnIcon fontSize="small" color="action" sx={{ mr: 2 }} />
-                                    <ListItemText
-                                        primary={
-                                            <Typography variant="subtitle1" fontWeight={600}>
-                                                {city.name}
-                                            </Typography>
-                                        }
-                                        secondary={
-                                            <Typography variant="body2" color="text.secondary">
-                                                {city.state ? `${city.state}, ` : ''}{city.country}
-                                            </Typography>
-                                        }
-                                    />
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Paper>
-                )}
-            </Box>
-
-            {currentWeather && currentWeather.main && (
+            {isLoading || isLocating ? (
+                <Box sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+                    <WeatherLoader />
+                </Box>
+            ) : currentWeather && currentWeather.main ? (
                 <Box sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
                     <Paper
                         onClick={() => navigate(`/city/${currentWeather.name}`)}
@@ -269,7 +185,78 @@ const Dashboard = () => {
                                 </Box>
                                 <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>{Math.round(currentWeather.wind?.speed)} m/s</Typography>
                             </Box>
+
+                            <Box sx={{ width: 1, height: 45, bgcolor: 'divider', opacity: 0.1, alignSelf: 'center' }} />
+
+                            <Box sx={{ textAlign: 'center', flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, color: 'text.secondary', mb: 0.5 }}>
+                                    <Typography variant="body2" fontWeight={500} sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>AQI</Typography>
+                                </Box>
+                                <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: currentWeather.aqi <= 100 ? 'success.main' : 'error.main' }}>
+                                    {currentWeather.aqi || '-'}
+                                </Typography>
+                            </Box>
                         </Box>
+
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Tooltip title="View on Map">
+                                <IconButton
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        navigate(`/maps?lat=${currentWeather.coord?.lat}&lon=${currentWeather.coord?.lon}&city=${currentWeather.name}`)
+                                    }}
+                                    sx={{
+                                        background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                                        color: 'white',
+                                        '&:hover': {
+                                            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                                        }
+                                    }}
+                                >
+                                    <MapIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    </Paper>
+                </Box>
+            ) : (
+                <Box sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 4,
+                            borderRadius: 6,
+                            background: 'rgba(255,255,255,0.05)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            maxWidth: 500,
+                            width: '100%',
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 2
+                        }}
+                    >
+                        <Box sx={{
+                            bgcolor: locationError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                            p: 2,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mb: 1
+                        }}>
+                            <LocationOnIcon sx={{ fontSize: 40, color: locationError ? '#ef4444' : '#3b82f6' }} />
+                        </Box>
+                        <Typography variant="h5" fontWeight={600}>
+                            {locationError ? 'Location Access Denied' : 'Location Access Required'}
+                        </Typography>
+                        <Typography color="text.secondary" sx={{ maxWidth: '80%', mb: 2 }}>
+                            {locationError
+                                ? 'Please enable location access in your browser settings to see your local weather, or search for a city above.'
+                                : 'Please allow location access to see your local weather.'}
+                        </Typography>
                     </Paper>
                 </Box>
             )}

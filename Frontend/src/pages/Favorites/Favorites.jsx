@@ -6,8 +6,12 @@ import Typography from '@mui/material/Typography'
 
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { formatTemp, isDaytime, getMoonPhase } from '../../utils/weatherUtils'
-import WeatherLoader from '../../Components/Loading/WeatherLoader'
+import { formatTemp, isDaytime, getMoonPhase, calculateAQI } from '../../utils/weatherUtils'
+import MapIcon from '@mui/icons-material/Map'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import WeatherLoader from '../../components/Loading/WeatherLoader'
+import SearchBar from '../../Components/SearchBar/SearchBar'
 
 const countryCities = {
     IN: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad'],
@@ -23,11 +27,13 @@ const Favorites = () => {
     const { celsius } = useSelector((store) => store.preferencesReducer)
     const [weatherData, setWeatherData] = useState({})
     const [suggestedCities, setSuggestedCities] = useState([])
+    const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(true)
     const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 
     useEffect(() => {
         dispatch(getFavorites())
 
+        setIsSuggestionsLoading(true)
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -38,11 +44,16 @@ const Favorites = () => {
                             setSuggestedCities(countryCities[code] || countryCities.DEFAULT)
                         })
                         .catch(() => setSuggestedCities(countryCities.DEFAULT))
+                        .finally(() => setIsSuggestionsLoading(false))
                 },
-                () => setSuggestedCities(countryCities.DEFAULT)
+                () => {
+                    setSuggestedCities(countryCities.DEFAULT)
+                    setIsSuggestionsLoading(false)
+                }
             )
         } else {
             setSuggestedCities(countryCities.DEFAULT)
+            setIsSuggestionsLoading(false)
         }
     }, [dispatch, API_KEY])
 
@@ -51,7 +62,18 @@ const Favorites = () => {
             favorites.forEach(fav => {
                 if (!weatherData[fav.cityName]) {
                     axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${fav.cityName}&appid=${API_KEY}&units=metric`)
-                        .then(res => setWeatherData(prev => ({ ...prev, [fav.cityName]: res.data })))
+                        .then(res => {
+                            const { lat, lon } = res.data.coord
+                            axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
+                                .then(aqiRes => {
+                                    const pm25 = aqiRes.data.list[0]?.components?.pm2_5
+                                    const aqi = calculateAQI(pm25)
+                                    setWeatherData(prev => ({ ...prev, [fav.cityName]: { ...res.data, aqi } }))
+                                })
+                                .catch(() => {
+                                    setWeatherData(prev => ({ ...prev, [fav.cityName]: res.data }))
+                                })
+                        })
                         .catch(() => { })
                 }
             })
@@ -61,17 +83,20 @@ const Favorites = () => {
     const favoriteNames = favorites?.map(f => f.cityName?.toLowerCase()) || []
     const filteredSuggestions = suggestedCities.filter(city => !favoriteNames.includes(city.toLowerCase()))
 
-    if (isLoading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-                <WeatherLoader />
-            </Box>
-        )
-    }
 
     return (
         <Box sx={{ p: 3, pt: 10, maxWidth: 600, mx: 'auto' }}>
-            {favorites && favorites.length > 0 && (
+            <Typography variant="h4" component="h1" sx={{ mb: 3, fontWeight: 700, textAlign: 'center' }}>
+                Your Favorites
+            </Typography>
+            <Box sx={{ mb: 4 }}>
+                <SearchBar />
+            </Box>
+            {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '20vh', mb: 4 }}>
+                    <WeatherLoader />
+                </Box>
+            ) : favorites && favorites.length > 0 && (
                 <Box sx={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
@@ -146,11 +171,33 @@ const Favorites = () => {
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'text.secondary', mb: 1 }}>
                                             <span>H: {formatTemp(weather.main?.temp_max, celsius)}°</span>
                                             <span>L: {formatTemp(weather.main?.temp_min, celsius)}°</span>
-                                            <span>Feels {formatTemp(weather.main?.feels_like, celsius)}°</span>
+                                            {weather.aqi && <span style={{ color: weather.aqi <= 100 ? '#10b981' : '#ef4444' }}>AQI: {weather.aqi}</span>}
                                         </Box>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'text.secondary' }}>
                                             <span>💧 {weather.main?.humidity}%</span>
                                             <span>💨 {weather.wind?.speed} m/s {['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round((weather.wind?.deg || 0) / 45) % 8]}</span>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5 }}>
+                                            <Tooltip title="View on Map">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        navigate(`/maps?lat=${weather.coord?.lat}&lon=${weather.coord?.lon}&city=${fav.cityName}`)
+                                                    }}
+                                                    sx={{
+                                                        background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                                                        color: 'white',
+                                                        '&:hover': {
+                                                            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                                                        },
+                                                        width: 32,
+                                                        height: 32
+                                                    }}
+                                                >
+                                                    <MapIcon sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            </Tooltip>
                                         </Box>
                                     </Box>
                                 )}
@@ -160,7 +207,11 @@ const Favorites = () => {
                 </Box>
             )}
 
-            {filteredSuggestions.length > 0 && (
+            {isSuggestionsLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <WeatherLoader />
+                </Box>
+            ) : filteredSuggestions.length > 0 && (
                 <Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                         {favorites && favorites.length > 0 ? 'Add more cities' : 'Suggested cities'}

@@ -11,11 +11,11 @@ import {
 } from "./types"
 
 const authInitialState = {
-    isAuth: false,
+    isAuth: JSON.parse(localStorage.getItem('weatherapp')) || false,
     isLoading: false,
     isError: false,
     errorMessage: "",
-    user: {},
+    user: JSON.parse(localStorage.getItem('user')) || {},
     registerSuccess: false
 }
 

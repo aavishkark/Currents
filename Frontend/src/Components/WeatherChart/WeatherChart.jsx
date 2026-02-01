@@ -170,17 +170,15 @@ const WeatherChart = () => {
                                 <YAxis width={30} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--bg-paper)', opacity: 0.1 }} />
                                 <Bar dataKey="pop" fill="#0ea5e9" radius={[4, 4, 0, 0]} animationDuration={1500} />
-                                {timeRange !== '24h' && (
-                                    <Brush
-                                        dataKey="time"
-                                        height={30}
-                                        stroke="var(--primary-color)"
-                                        fill="var(--bg-default)"
-                                        opacity={0.5}
-                                        tickFontSize={10}
-                                        travellerWidth={12}
-                                    />
-                                )}
+                                <Brush
+                                    dataKey="time"
+                                    height={30}
+                                    stroke="var(--primary-color)"
+                                    fill="var(--bg-default)"
+                                    opacity={0.5}
+                                    tickFontSize={10}
+                                    travellerWidth={12}
+                                />
                             </BarChart>
                         ) : (
                             <LineChart key={`${timeRange}-${tabValue}`} data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 50 }}>
@@ -207,17 +205,15 @@ const WeatherChart = () => {
                                     activeDot={{ r: 6, fill: tabValue === 2 ? "#10b981" : "var(--primary-color)" }}
                                     animationDuration={1500}
                                 />
-                                {timeRange !== '24h' && (
-                                    <Brush
-                                        dataKey="time"
-                                        height={30}
-                                        stroke="var(--primary-color)"
-                                        fill="var(--bg-default)"
-                                        opacity={0.5}
-                                        tickFontSize={10}
-                                        travellerWidth={12}
-                                    />
-                                )}
+                                <Brush
+                                    dataKey="time"
+                                    height={30}
+                                    stroke="var(--primary-color)"
+                                    fill="var(--bg-default)"
+                                    opacity={0.5}
+                                    tickFontSize={10}
+                                    travellerWidth={12}
+                                />
                             </LineChart>
                         )}
                     </ResponsiveContainer>
