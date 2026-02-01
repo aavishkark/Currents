@@ -1,11 +1,12 @@
 import { applyMiddleware, combineReducers, legacy_createStore } from "redux"
 import { thunk } from "redux-thunk"
-import { authReducer, weatherReducer, favoritesReducer } from "./reducers"
+import { authReducer, weatherReducer, favoritesReducer, preferencesReducer } from "./reducers"
 
 const rootReducer = combineReducers({
     authReducer,
     weatherReducer,
-    favoritesReducer
+    favoritesReducer,
+    preferencesReducer
 })
 
 export const store = legacy_createStore(rootReducer, applyMiddleware(thunk))

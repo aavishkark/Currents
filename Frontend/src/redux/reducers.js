@@ -6,7 +6,8 @@ import {
     GET_FORECAST_REQ, GET_FORECAST_SUCCESS, GET_FORECAST_FAILURE, CLEAR_SEARCH,
     GET_FAVORITES_REQ, GET_FAVORITES_SUCCESS, GET_FAVORITES_FAILURE,
     ADD_FAVORITE_REQ, ADD_FAVORITE_SUCCESS, ADD_FAVORITE_FAILURE,
-    REMOVE_FAVORITE_REQ, REMOVE_FAVORITE_SUCCESS, REMOVE_FAVORITE_FAILURE
+    REMOVE_FAVORITE_REQ, REMOVE_FAVORITE_SUCCESS, REMOVE_FAVORITE_FAILURE,
+    TOGGLE_TEMP_UNIT
 } from "./types"
 
 const authInitialState = {
@@ -104,6 +105,22 @@ export const favoritesReducer = (state = favoritesInitialState, { type, payload 
             return { ...state, isLoading: false, isError: false }
         case REMOVE_FAVORITE_FAILURE:
             return { ...state, isLoading: false, isError: true, errorMessage: payload.msg }
+        default:
+            return state
+    }
+}
+
+const preferencesInitialState = {
+    celsius: JSON.parse(localStorage.getItem('weatherAppSettings'))?.celsius ?? true
+}
+
+export const preferencesReducer = (state = preferencesInitialState, { type }) => {
+    switch (type) {
+        case TOGGLE_TEMP_UNIT:
+            const newState = { ...state, celsius: !state.celsius }
+            const currentSettings = JSON.parse(localStorage.getItem('weatherAppSettings')) || {}
+            localStorage.setItem('weatherAppSettings', JSON.stringify({ ...currentSettings, celsius: newState.celsius }))
+            return newState
         default:
             return state
     }

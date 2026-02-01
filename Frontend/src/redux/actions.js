@@ -7,7 +7,7 @@ import {
     GET_FORECAST_REQ, GET_FORECAST_SUCCESS, GET_FORECAST_FAILURE, CLEAR_SEARCH,
     GET_FAVORITES_REQ, GET_FAVORITES_SUCCESS, GET_FAVORITES_FAILURE,
     ADD_FAVORITE_REQ, ADD_FAVORITE_SUCCESS, ADD_FAVORITE_FAILURE,
-    REMOVE_FAVORITE_REQ, REMOVE_FAVORITE_SUCCESS, REMOVE_FAVORITE_FAILURE
+    REMOVE_FAVORITE_REQ, REMOVE_FAVORITE_SUCCESS, REMOVE_FAVORITE_FAILURE, TOGGLE_TEMP_UNIT
 } from "./types"
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -169,4 +169,8 @@ export const removeFavorite = (id) => (dispatch) => {
         .catch((err) => {
             dispatch({ type: REMOVE_FAVORITE_FAILURE, payload: { msg: err } })
         })
+}
+
+export const toggleTempUnit = () => (dispatch) => {
+    dispatch({ type: TOGGLE_TEMP_UNIT })
 }
