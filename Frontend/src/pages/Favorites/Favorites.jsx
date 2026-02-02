@@ -243,16 +243,6 @@ const Favorites = () => {
                     <Typography color="text.secondary" sx={{ mb: 2 }}>
                         No favorites yet
                     </Typography>
-                    <Typography
-                        onClick={() => navigate('/')}
-                        sx={{
-                            color: 'primary.main',
-                            cursor: 'pointer',
-                            '&:hover': { textDecoration: 'underline' }
-                        }}
-                    >
-                        Search for a city
-                    </Typography>
                 </Box>
             )}
         </Box>
